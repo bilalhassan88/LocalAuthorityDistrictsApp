@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LocalAuthorityDistricts.Domain.Entities
+﻿namespace LocalAuthorityDistricts.Domain
 {
-    internal class GeoJson
+    // Represents the entire GeoJSON file as a FeatureCollection.
+    public class GeoJson
     {
+        public GeoJsonObjectType CollectionType { get; private set; } = GeoJsonObjectType.FeatureCollection;
+        public List<Feature> Features { get; private set; }
+
+        public GeoJson(List<Feature> features)
+        {
+            Features = features ?? new List<Feature>();
+        }
     }
 }

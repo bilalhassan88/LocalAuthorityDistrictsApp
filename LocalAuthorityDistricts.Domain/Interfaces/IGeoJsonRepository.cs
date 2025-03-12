@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LocalAuthorityDistricts.Domain.Interfaces
+﻿namespace LocalAuthorityDistricts.Domain
 {
-    internal class IGeoJsonRepository
+    // Fetches raw Feature data from your static .geojson file
+    public interface IGeoJsonRepository
     {
+        Task<List<Feature>> GetAllFeaturesAsync();
     }
 }
