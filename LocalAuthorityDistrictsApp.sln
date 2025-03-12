@@ -3,23 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34322.80
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalAuthorityDistricts.Domain", "LocalAuthorityDistricts.Domain\LocalAuthorityDistricts.Domain.csproj", "{FD589658-BA0F-4EAC-A81E-79068FFE8DE9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.Domain", "LocalAuthorityDistricts.Domain\LocalAuthorityDistricts.Domain.csproj", "{FD589658-BA0F-4EAC-A81E-79068FFE8DE9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalAuthorityDistricts.Application", "LocalAuthorityDistricts.Application\LocalAuthorityDistricts.Application.csproj", "{74A0CDF0-BE12-48B0-A1DA-CD8E230CBD82}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.Application", "LocalAuthorityDistricts.Application\LocalAuthorityDistricts.Application.csproj", "{74A0CDF0-BE12-48B0-A1DA-CD8E230CBD82}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalAuthorityDistricts.Infrastructure", "LocalAuthorityDistricts.Infrastructure\LocalAuthorityDistricts.Infrastructure.csproj", "{BE21C404-4B52-47F8-89CD-40573FA9B68E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.Infrastructure", "LocalAuthorityDistricts.Infrastructure\LocalAuthorityDistricts.Infrastructure.csproj", "{BE21C404-4B52-47F8-89CD-40573FA9B68E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalAuthorityDistricts.Api", "LocalAuthorityDistricts.Api\LocalAuthorityDistricts.Api.csproj", "{33910096-800A-498B-8D0F-25155DE47B3C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.Api", "LocalAuthorityDistricts.Api\LocalAuthorityDistricts.Api.csproj", "{33910096-800A-498B-8D0F-25155DE47B3C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalAuthorityDistricts.Presentation.Blazor", "LocalAuthorityDistricts.Presentation.Blazor\LocalAuthorityDistricts.Presentation.Blazor.csproj", "{0EBB1024-6115-45AE-B1B3-B9A3B03B256A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.Presentation.Blazor", "LocalAuthorityDistricts.Presentation.Blazor\LocalAuthorityDistricts.Presentation.Blazor.csproj", "{0EBB1024-6115-45AE-B1B3-B9A3B03B256A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{5A0EB188-C15B-47A5-9148-7FF486242FDE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalAuthorityDistricts.Application.Tests", "LocalAuthorityDistricts.Application.Tests\LocalAuthorityDistricts.Application.Tests.csproj", "{0ED759D5-CA28-4B07-9F19-2AC471320D13}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.Application.Tests", "LocalAuthorityDistricts.Application.Tests\LocalAuthorityDistricts.Application.Tests.csproj", "{0ED759D5-CA28-4B07-9F19-2AC471320D13}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalAuthorityDistricts.Infrastructure.Tests", "LocalAuthorityDistricts.Infrastructure.Tests\LocalAuthorityDistricts.Infrastructure.Tests.csproj", "{5749AE0B-FCEC-403B-95B9-097889154684}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.Infrastructure.Tests", "LocalAuthorityDistricts.Infrastructure.Tests\LocalAuthorityDistricts.Infrastructure.Tests.csproj", "{5749AE0B-FCEC-403B-95B9-097889154684}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalAuthorityDistricts.Presentation.Tests", "LocalAuthorityDistricts.Presentation.Tests\LocalAuthorityDistricts.Presentation.Tests.csproj", "{E6F1CD45-C318-4705-85F3-DFD295D12715}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.Presentation.Tests", "LocalAuthorityDistricts.Presentation.Tests\LocalAuthorityDistricts.Presentation.Tests.csproj", "{E6F1CD45-C318-4705-85F3-DFD295D12715}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
