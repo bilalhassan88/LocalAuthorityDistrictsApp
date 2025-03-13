@@ -1,6 +1,11 @@
-﻿namespace LocalAuthorityDistricts.Application.Interfaces
+﻿using LocalAuthorityDistricts.Domain;
+
+namespace LocalAuthorityDistricts.Application
 {
-    internal interface IGeoJsonService
+    public interface IGeoJsonService
     {
+        Task<List<Feature>> GetAllDistrictsAsync();
+
+        Task<List<Feature>> FilterByNameAsync(string name);
     }
 }
