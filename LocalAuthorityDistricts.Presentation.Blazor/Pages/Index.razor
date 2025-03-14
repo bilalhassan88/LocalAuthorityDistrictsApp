@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using System.Net.Http.Json
 @using Domain
+@using System.Text.Json
 @inject HttpClient Http
 @inject IJSRuntime JS
 
@@ -33,10 +34,16 @@
 
     private async Task LoadAllDistricts()
     {
-        var features = await Http.GetFromJsonAsync<List<Feature>>("api/districts/all");
-        if (features is not null)
+        displayedFeatures.Clear();
+        var stream = await Http.GetStreamAsync("api/districts/all");
+        var features = JsonSerializer.DeserializeAsyncEnumerable<Feature>(stream, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+        await foreach (var feature in features)
         {
-            displayedFeatures = features;
+            displayedFeatures.Add(feature);
             await UpdateMap(displayedFeatures);
         }
     }
@@ -50,9 +57,18 @@
         }
         else
         {
-            var filtered = await Http.GetFromJsonAsync<List<Feature>>($"api/districts/filter?name={searchQuery}");
-            displayedFeatures = filtered ?? new();
-            await UpdateMap(displayedFeatures);
+            displayedFeatures.Clear();
+            var stream = await Http.GetStreamAsync($"api/districts/filter?name={searchQuery}");
+            var features = JsonSerializer.DeserializeAsyncEnumerable<Feature>(stream, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+            await foreach (var feature in features)
+            {
+                displayedFeatures.Add(feature);
+                await UpdateMap(displayedFeatures);
+            }
         }
     }
 
@@ -64,12 +80,11 @@
 
     private async Task UpdateMap(List<Feature> features)
     {
-        var geoJson = new {
+        var geoJson = new
+        {
             type = "FeatureCollection",
             features = features
         };
         await JS.InvokeVoidAsync("mapboxInterop.addGeoJsonLayer", "districtsLayer", geoJson);
     }
-
-    // same local model classes...
 }

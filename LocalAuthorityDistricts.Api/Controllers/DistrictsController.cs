@@ -1,38 +1,38 @@
 using LocalAuthorityDistricts.Application;
 using LocalAuthorityDistricts.Domain;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
-namespace LocalAuthorityDistricts.API.Controllers
+[ApiController]
+[Route("api/[controller]")]
+public class DistrictsController : ControllerBase
 {
-    [ApiController]
-    [Route("api/districts")]
-    public class DistrictsController : ControllerBase
+    private readonly IGeoJsonService _geoJsonService;
+    private readonly ILogger<DistrictsController> _logger;
+
+    public DistrictsController(IGeoJsonService geoJsonService, ILogger<DistrictsController> logger)
     {
-        private readonly IGeoJsonService _geoJsonService;
+        _geoJsonService = geoJsonService;
+        _logger = logger;
+    }
 
-        public DistrictsController(IGeoJsonService geoJsonService)
+    [HttpGet("all")]
+    public async IAsyncEnumerable<Feature> GetAllDistricts()
+    {
+        await foreach (var feature in _geoJsonService.GetAllDistrictsAsync())
         {
-            _geoJsonService = geoJsonService;
-        }
-
-        [HttpGet]
-        public async IAsyncEnumerable<Feature> GetAllDistricts()
-        {
-            await foreach (var feature in _geoJsonService.GetAllDistrictsAsync())
-            {
-                yield return feature;
-            }
-        }
-
-        [HttpGet("filter")]
-        public async IAsyncEnumerable<Feature> FilterByName([FromQuery] string name)
-        {
-            await foreach (var feature in _geoJsonService.FilterByNameAsync(name))
-            {
-                yield return feature;
-            }
+            _logger.LogInformation("Yielding feature: {FeatureName}", feature.Properties.Name);
+            yield return feature;
         }
     }
+
+    [HttpGet("filter")]
+    public async IAsyncEnumerable<Feature> FilterByName([FromQuery] string name)
+    {
+        await foreach (var feature in _geoJsonService.FilterByNameAsync(name))
+        {
+            yield return feature;
+        }
+    }
+
 }

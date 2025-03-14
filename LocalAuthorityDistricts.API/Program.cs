@@ -30,15 +30,18 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+app.UseCors();
+
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseCors();
-
 app.UseRouting();
+
+
 app.MapControllers();
 
 app.Run();

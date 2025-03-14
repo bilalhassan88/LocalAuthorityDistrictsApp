@@ -26,7 +26,14 @@ namespace LocalAuthorityDistricts.Application
 
             foreach (var batch in batches)
             {
-                foreach (var feature in batch)
+                var processedFeatures = new ConcurrentBag<Feature>();
+
+                await Parallel.ForEachAsync(batch, async (feature, ct) =>
+                {
+                    processedFeatures.Add(feature);
+                });
+
+                foreach (var feature in processedFeatures)
                 {
                     yield return feature;
                 }
