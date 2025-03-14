@@ -1,0 +1,8 @@
+﻿@page "/"
+@namespace LocalAuthorityDistricts.Presentation.BlazorServer.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = "_Layout";
+}
+<script src="~/js/mapboxInterop.js"></script>
+<component type="typeof(App)" render-mode="ServerPrerendered" />

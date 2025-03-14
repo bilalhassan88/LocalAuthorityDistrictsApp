@@ -1,0 +1,184 @@
+﻿@page "/"
+@using LocalAuthorityDistricts.Application
+@using LocalAuthorityDistricts.Domain
+
+@inject IGeoJsonService GeoJsonService
+@inject IJSRuntime JS
+
+<h3>Local Authority Districts (Read-Only)</h3>
+
+<input type="text" @bind="searchQuery" @oninput="OnSearchInput" placeholder="Search by name..." />
+<button @onclick="HideAll">Hide All</button>
+
+<div id="map" style="width: 100%; height: 600px;"></div>
+
+@if (errorMessage != null)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@code {
+    private List<Feature> displayedFeatures = new();
+    private string searchQuery = string.Empty;
+    private System.Threading.Timer? debounceTimer;
+    private string? errorMessage;
+    private CancellationTokenSource? cts;
+
+    private readonly string mapboxAccessToken = "pk.eyJ1IjoiYmlsYWxoYXNzYW4iLCJhIjoiY2pzZXBtZDlrMTVjZzQ0bzZmY29zNHozbCJ9.gIAwBp9pMmZUhWliI4CrfA";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeMap();
+            await LoadAllDistricts();
+        }
+    }
+
+    private async Task InitializeMap()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("mapboxInterop.initializeMap", mapboxAccessToken, "map");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to initialize map: {ex.Message}";
+            StateHasChanged(); // Trigger a re-render to display the error message
+        }
+    }
+
+    private async Task LoadAllDistricts()
+    {
+        cts?.Cancel(); // Cancel any ongoing operation
+        cts = new CancellationTokenSource();
+
+        try
+        {
+            displayedFeatures.Clear();
+            errorMessage = null;
+            StateHasChanged(); // Trigger a re-render to clear the UI
+
+            await foreach (var feature in GeoJsonService.GetAllDistrictsAsync().WithCancellation(cts.Token))
+            {
+                displayedFeatures.Add(feature);
+
+                // Update map in batches (every 10 items)
+                if (displayedFeatures.Count % 10 == 0)
+                {
+                    await UpdateMapAsync();
+                }
+            }
+
+            // Final update to ensure all features appear
+            await UpdateMapAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore cancellation
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load districts: {ex.Message}";
+            StateHasChanged(); // Trigger a re-render to display the error message
+        }
+    }
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        searchQuery = e?.Value?.ToString() ?? string.Empty;
+
+        // Dispose old timer (if any) and debounce user input for 300 ms
+        debounceTimer?.Dispose();
+        debounceTimer = new System.Threading.Timer(
+            async _ => await InvokeAsync(InvokeSearch),
+            null,
+            300,
+            System.Threading.Timeout.Infinite
+        );
+    }
+
+    private async Task InvokeSearch()
+    {
+        cts?.Cancel(); // Cancel any ongoing operation
+        cts = new CancellationTokenSource();
+
+        try
+        {
+            displayedFeatures.Clear();
+            errorMessage = null;
+            StateHasChanged(); // Trigger a re-render to clear the UI
+
+            if (string.IsNullOrWhiteSpace(searchQuery))
+            {
+                await LoadAllDistricts();
+            }
+            else
+            {
+                await foreach (var feature in GeoJsonService.FilterByNameAsync(searchQuery).WithCancellation(cts.Token))
+                {
+                    displayedFeatures.Add(feature);
+
+                    // Update map in batches (every 10 items)
+                    if (displayedFeatures.Count % 10 == 0)
+                    {
+                        await UpdateMapAsync();
+                    }
+                }
+
+                await UpdateMapAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore cancellation
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to search districts: {ex.Message}";
+            StateHasChanged(); // Trigger a re-render to display the error message
+        }
+    }
+
+    private async Task HideAll()
+    {
+        try
+        {
+            displayedFeatures.Clear();
+            await JS.InvokeVoidAsync("mapboxInterop.removeLayer", "districtsLayer");
+            StateHasChanged(); // Trigger a re-render to clear the UI
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to hide districts: {ex.Message}";
+            StateHasChanged(); // Trigger a re-render to display the error message
+        }
+    }
+
+    private async Task UpdateMapAsync()
+    {
+        try
+        {
+            var geoJson = new
+            {
+                type = "FeatureCollection",
+                features = displayedFeatures
+            };
+
+            await JS.InvokeVoidAsync("mapboxInterop.addGeoJsonLayer", "districtsLayer", geoJson);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to update map: {ex.Message}";
+            StateHasChanged(); // Trigger a re-render to display the error message
+        }
+    }
+
+    // Implement IDisposable for cleanup
+    public void Dispose()
+    {
+        // Clean up the timer and cancellation token
+        debounceTimer?.Dispose();
+        cts?.Cancel();
+    }
+}
