@@ -1,7 +1,8 @@
 ﻿using LocalAuthorityDistricts.Domain;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
-
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace LocalAuthorityDistricts.Application
 {
@@ -15,49 +16,38 @@ namespace LocalAuthorityDistricts.Application
             IOptions<ConcurrencyChunkSettings> chunkSettings)
         {
             _repository = repository;
-            _chunkSettings = chunkSettings.Value; 
+            _chunkSettings = chunkSettings.Value;
         }
 
-        public async Task<List<Feature>> GetAllDistrictsAsync()
+        public async IAsyncEnumerable<Feature> GetAllDistrictsAsync()
         {
             var allFeatures = await _repository.GetAllFeaturesAsync();
-
             var batches = allFeatures.Chunk(_chunkSettings.ChunkSize);
-            var bag = new ConcurrentBag<Feature>();
 
-            await Parallel.ForEachAsync(batches, async (batch, ct) =>
+            foreach (var batch in batches)
             {
-                // optional: simulate "work"
-                await Task.Delay(50, ct);
-                foreach (var f in batch)
+                foreach (var feature in batch)
                 {
-                    bag.Add(f);
+                    yield return feature;
                 }
-            });
-
-            return bag.ToList();
+            }
         }
 
-        public async Task<List<Feature>> FilterByNameAsync(string name)
+        public async IAsyncEnumerable<Feature> FilterByNameAsync(string name)
         {
             var allFeatures = await _repository.GetAllFeaturesAsync();
+            var batches = allFeatures.Chunk(_chunkSettings.ChunkSize);
 
-            var chunked = allFeatures.Chunk(_chunkSettings.ChunkSize);
-            var bag = new ConcurrentBag<Feature>();
-
-            await Parallel.ForEachAsync(chunked, async (batch, ct) =>
+            foreach (var batch in batches)
             {
-                await Task.Delay(50, ct);
-                foreach (var f in batch)
+                foreach (var feature in batch)
                 {
-                    if (f.Properties.Name.Contains(name, System.StringComparison.OrdinalIgnoreCase))
+                    if (feature.Properties.Name.Contains(name, System.StringComparison.OrdinalIgnoreCase))
                     {
-                        bag.Add(f);
+                        yield return feature;
                     }
                 }
-            });
-
-            return bag.ToList();
+            }
         }
     }
 }

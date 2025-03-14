@@ -1,12 +1,14 @@
-﻿namespace LocalAuthorityDistricts.Domain
+﻿using System.Text.Json.Serialization;
+
+namespace LocalAuthorityDistricts.Domain
 {
-    // The geometry portion of a Feature (Polygon, MultiPolygon, etc.).
+    [JsonConverter(typeof(GeometryJsonConverter))]
     public class Geometry
     {
-        public GeoJsonObjectType GeometryType { get; private set; }
-        public List<List<List<double>>> Coordinates { get; private set; }
+        public GeoJsonObjectType GeometryType { get; }
+        public ICoordinates Coordinates { get; }
 
-        public Geometry(GeoJsonObjectType geometryType, List<List<List<double>>> coordinates)
+        public Geometry(GeoJsonObjectType geometryType, ICoordinates coordinates)
         {
             GeometryType = geometryType;
             Coordinates = coordinates ?? throw new ArgumentNullException(nameof(coordinates));

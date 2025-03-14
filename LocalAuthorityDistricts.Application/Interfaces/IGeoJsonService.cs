@@ -1,11 +1,12 @@
 ﻿using LocalAuthorityDistricts.Domain;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace LocalAuthorityDistricts.Application
 {
     public interface IGeoJsonService
     {
-        Task<List<Feature>> GetAllDistrictsAsync();
-
-        Task<List<Feature>> FilterByNameAsync(string name);
+        IAsyncEnumerable<Feature> GetAllDistrictsAsync();
+        IAsyncEnumerable<Feature> FilterByNameAsync(string name);
     }
 }

@@ -1,8 +1,10 @@
 using LocalAuthorityDistricts.Application;
+using LocalAuthorityDistricts.Domain;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace LocalAuthorityDistricts.API
+namespace LocalAuthorityDistricts.API.Controllers
 {
     [ApiController]
     [Route("api/districts")]
@@ -15,26 +17,22 @@ namespace LocalAuthorityDistricts.API
             _geoJsonService = geoJsonService;
         }
 
-        // GET: api/districts/all
-        [HttpGet("all")]
-        public async Task<IActionResult> GetAllDistricts()
+        [HttpGet]
+        public async IAsyncEnumerable<Feature> GetAllDistricts()
         {
-            var features = await _geoJsonService.GetAllDistrictsAsync();
-            return Ok(features);
+            await foreach (var feature in _geoJsonService.GetAllDistrictsAsync())
+            {
+                yield return feature;
+            }
         }
 
-        // GET: api/districts/filter?name=Oxford
         [HttpGet("filter")]
-        public async Task<IActionResult> FilterByName([FromQuery] string name)
+        public async IAsyncEnumerable<Feature> FilterByName([FromQuery] string name)
         {
-            if (string.IsNullOrWhiteSpace(name))
+            await foreach (var feature in _geoJsonService.FilterByNameAsync(name))
             {
-                var all = await _geoJsonService.GetAllDistrictsAsync();
-                return Ok(all);
+                yield return feature;
             }
-
-            var matches = await _geoJsonService.FilterByNameAsync(name);
-            return Ok(matches);
         }
     }
 }

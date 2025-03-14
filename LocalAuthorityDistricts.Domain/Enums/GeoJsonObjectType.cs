@@ -2,13 +2,14 @@
 {
     public enum GeoJsonObjectType
     {
-        Feature,
         FeatureCollection,
-        Polygon,
-        MultiPolygon,
+        Feature,
         Point,
         MultiPoint,
         LineString,
-        MultiLineString
+        MultiLineString,
+        Polygon,
+        MultiPolygon,
+        GeometryCollection
     }
 }
