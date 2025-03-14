@@ -9,6 +9,7 @@
 
 <input type="text" @bind="searchQuery" @oninput="OnSearchInput" placeholder="Search by name..." />
 <button @onclick="HideAll">Hide All</button>
+<button @onclick="Reload">Reload</button>
 
 <div id="map" style="width: 100%; height: 600px;"></div>
 
@@ -50,7 +51,8 @@
 
     private async Task LoadAllDistricts()
     {
-        cts?.Cancel(); // Cancel any ongoing operation
+        // Cancel any ongoing operation
+        cts?.Cancel();
         cts = new CancellationTokenSource();
 
         try
@@ -61,6 +63,12 @@
 
             await foreach (var feature in GeoJsonService.GetAllDistrictsAsync().WithCancellation(cts.Token))
             {
+                // Check if cancellation was requested
+                if (cts.Token.IsCancellationRequested)
+                {
+                    break; // Exit the loop if cancellation is requested
+                }
+
                 displayedFeatures.Add(feature);
 
                 // Update map in batches (every 10 items)
@@ -71,7 +79,10 @@
             }
 
             // Final update to ensure all features appear
-            await UpdateMapAsync();
+            if (!cts.Token.IsCancellationRequested)
+            {
+                await UpdateMapAsync();
+            }
         }
         catch (OperationCanceledException)
         {
@@ -100,7 +111,8 @@
 
     private async Task InvokeSearch()
     {
-        cts?.Cancel(); // Cancel any ongoing operation
+        // Cancel any ongoing operation
+        cts?.Cancel();
         cts = new CancellationTokenSource();
 
         try
@@ -117,6 +129,12 @@
             {
                 await foreach (var feature in GeoJsonService.FilterByNameAsync(searchQuery).WithCancellation(cts.Token))
                 {
+                    // Check if cancellation was requested
+                    if (cts.Token.IsCancellationRequested)
+                    {
+                        break; // Exit the loop if cancellation is requested
+                    }
+
                     displayedFeatures.Add(feature);
 
                     // Update map in batches (every 10 items)
@@ -126,7 +144,10 @@
                     }
                 }
 
-                await UpdateMapAsync();
+                if (!cts.Token.IsCancellationRequested)
+                {
+                    await UpdateMapAsync();
+                }
             }
         }
         catch (OperationCanceledException)
@@ -144,6 +165,10 @@
     {
         try
         {
+            // Cancel any ongoing operation
+            cts?.Cancel();
+
+            // Clear the displayed features and remove the layer from the map
             displayedFeatures.Clear();
             await JS.InvokeVoidAsync("mapboxInterop.removeLayer", "districtsLayer");
             StateHasChanged(); // Trigger a re-render to clear the UI
@@ -153,6 +178,11 @@
             errorMessage = $"Failed to hide districts: {ex.Message}";
             StateHasChanged(); // Trigger a re-render to display the error message
         }
+    }
+
+    private async Task Reload()
+    {
+        await LoadAllDistricts(); // Restart the process of loading all districts
     }
 
     private async Task UpdateMapAsync()
