@@ -10,6 +10,7 @@ builder.Services.AddServerSideBlazor();
 
 builder.Services.AddSingleton<IGeoJsonRepository, GeoJsonRepository>();
 builder.Services.AddScoped<IGeoJsonService, GeoJsonService>();
+builder.Services.AddScoped<ICityService, CityService>();
 
 builder.Services.Configure<GeoJsonFileSettings>(builder.Configuration.GetSection("GeoJsonFileSettings"));
 builder.Services.Configure<ConcurrencyChunkSettings>(builder.Configuration.GetSection("ConcurrencyChunkSettings"));

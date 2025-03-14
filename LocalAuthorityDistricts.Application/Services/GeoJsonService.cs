@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LocalAuthorityDistricts.Application
@@ -40,7 +41,7 @@ namespace LocalAuthorityDistricts.Application
             }
         }
 
-        public async IAsyncEnumerable<Feature> FilterByNameAsync(string name)
+        public async IAsyncEnumerable<Feature> FilterByNameAsync(IEnumerable<string> names)
         {
             var allFeatures = await _repository.GetAllFeaturesAsync();
             var batches = allFeatures.Chunk(_chunkSettings.ChunkSize);
@@ -49,7 +50,7 @@ namespace LocalAuthorityDistricts.Application
             {
                 foreach (var feature in batch)
                 {
-                    if (feature.Properties.Name.Contains(name, System.StringComparison.OrdinalIgnoreCase))
+                    if (names.Any(name => feature.Properties.Name.Contains(name, System.StringComparison.OrdinalIgnoreCase)))
                     {
                         yield return feature;
                     }
