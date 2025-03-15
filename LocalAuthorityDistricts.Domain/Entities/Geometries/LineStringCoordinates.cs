@@ -1,14 +1,11 @@
-﻿//using System.Collections.Generic;
+﻿using LocalAuthorityDistricts.Domain;
 
-//namespace LocalAuthorityDistricts.Domain
-//{
-//    public class LineStringCoordinates : ICoordinates
-//    {
-//        public List<List<double>> Coordinates { get; set; }
+public class LineStringCoordinates : ICoordinates
+{
+    public List<List<double>> Coordinates { get; private set; }
 
-//        public LineStringCoordinates(List<List<double>> coordinates)
-//        {
-//            Coordinates = coordinates ?? new List<List<double>> { new List<double> { 0.0, 0.0 } };
-//        }
-//    }
-//}
+    public LineStringCoordinates(List<List<double>> coordinates)
+    {
+        Coordinates = coordinates ?? throw new ArgumentNullException(nameof(coordinates), "LineString coordinates cannot be null");
+    }
+}
