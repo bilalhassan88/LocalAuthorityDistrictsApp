@@ -16,12 +16,6 @@ builder.Services.Configure<GeoJsonFileSettings>(builder.Configuration.GetSection
 builder.Services.Configure<ChunkSettings>(builder.Configuration.GetSection("ChunkSettings"));
 builder.Services.Configure<MapboxSettings>(builder.Configuration.GetSection("MapboxSettings"));
 
-
-builder.Services.AddScoped(sp => new HttpClient
-{
-    BaseAddress = new Uri("http://localhost:5182") // API base URL
-});
-
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
