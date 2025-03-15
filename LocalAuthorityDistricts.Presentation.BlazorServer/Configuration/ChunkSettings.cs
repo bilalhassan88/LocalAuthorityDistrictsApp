@@ -1,6 +1,6 @@
 ﻿namespace LocalAuthorityDistricts.Presentation.BlazorServer.Configuration
 {
-    public class ConcurrencyChunkSettings
+    public class ChunkSettings
     {
         public int ChunkSize { get; set; }
     }
