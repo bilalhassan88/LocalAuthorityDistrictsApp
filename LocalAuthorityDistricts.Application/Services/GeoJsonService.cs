@@ -48,12 +48,19 @@ namespace LocalAuthorityDistricts.Application
 
             foreach (var batch in batches)
             {
-                foreach (var feature in batch)
+                var matchingFeatures = new ConcurrentBag<Feature>();
+
+                await Parallel.ForEachAsync(batch, async (feature, ct) =>
                 {
                     if (names.Any(name => feature.Properties.Name.Contains(name, System.StringComparison.OrdinalIgnoreCase)))
                     {
-                        yield return feature;
+                        matchingFeatures.Add(feature);
                     }
+                });
+
+                foreach (var feature in matchingFeatures)
+                {
+                    yield return feature;
                 }
             }
         }
