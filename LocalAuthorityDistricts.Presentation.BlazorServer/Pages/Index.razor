@@ -8,14 +8,12 @@
 
 <h3>Local Authority Districts (Read-Only)</h3>
 
-<input type="text" @bind="searchQuery" placeholder="Search by name (comma-separated)..." />
-<button @onclick="InvokeSearch">Search</button>
-<button @onclick="HideAll">Hide All</button>
-<button @onclick="Reload">Reload</button>
-
 <!-- City Dropdown -->
 <label for="cityDropdown">Select Cities:</label>
 <select id="cityDropdown" multiple="multiple" style="width: 100%;"></select>
+<button @onclick="InvokeSearch">Search by Selected Cities</button>
+<button @onclick="HideAll">Hide All</button>
+<button @onclick="Reload">Reload</button>
 
 <div id="map" style="width: 100%; height: 600px;"></div>
 
@@ -26,7 +24,6 @@
 
 @code {
     private List<Feature> displayedFeatures = new();
-    private string searchQuery = string.Empty;
     private string? errorMessage;
     private CancellationTokenSource? cts;
     private List<City> cities = new();
@@ -38,7 +35,6 @@
         if (firstRender)
         {
             await LoadCities();
-
             await InitializeMap();
             await LoadAllDistricts();
         }
@@ -102,7 +98,20 @@
 
     private async Task InvokeSearch()
     {
+
+        // Cancel any ongoing operations and clear current features.
         await HideAll();
+
+        // Get selected cities from the multi-select dropdown via JS interop.
+        var selectedCityValues = await JS.InvokeAsync<string[]>("getSelectedCities", "#cityDropdown");
+
+        if (selectedCityValues == null || !selectedCityValues.Any())
+        {
+            errorMessage = "Please select at least one city.";
+            StateHasChanged();
+            return;
+        }
+
         cts = new CancellationTokenSource();
 
         try
@@ -110,17 +119,8 @@
             errorMessage = null;
             StateHasChanged();
 
-            if (string.IsNullOrWhiteSpace(searchQuery))
-            {
-                errorMessage = "Please enter a search term.";
-                StateHasChanged();
-                return;
-            }
-
-            var names = searchQuery
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(name => name.Trim())
-                .ToList();
+            // Use the selected city values as the filter criteria.
+            var names = selectedCityValues.ToList();
 
             await foreach (var feature in GeoJsonService.FilterByNameAsync(names).WithCancellation(cts.Token))
             {
@@ -130,7 +130,7 @@
                 }
 
                 displayedFeatures.Add(feature);
-                await UpdateMapAsync();
+                    await UpdateMapAsync();
             }
 
             if (!cts.Token.IsCancellationRequested)
@@ -140,7 +140,7 @@
         }
         catch (OperationCanceledException)
         {
-            // Ignore cancellation
+            // Ignore cancellation.
         }
         catch (Exception ex)
         {
@@ -193,9 +193,9 @@
     {
         try
         {
-            // Adjust pageNumber and pageSize as needed
+            // Adjust pageNumber and pageSize as needed.
             cities = await CityService.GetCitiesAsync(1, 100);
-            // Initialize the JS dropdown with the cities list
+            // Initialize the JS dropdown with the cities list.
             await JS.InvokeVoidAsync("initializeCityDropdown", cities);
         }
         catch (Exception ex)

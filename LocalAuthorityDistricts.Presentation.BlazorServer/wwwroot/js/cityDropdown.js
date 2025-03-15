@@ -1,21 +1,25 @@
 ﻿// wwwroot/js/cityDropdown.js
 
+// Define getSelectedCities globally
+window.getSelectedCities = function (selector) {
+    const $dropdown = $(selector);
+    // Ensure Select2 is initialized
+    if (!$dropdown.hasClass('select2-hidden-accessible')) {
+        $dropdown.select2();
+    }
+    return $dropdown.val() || [];
+};
+
 window.initializeCityDropdown = (cities) => {
-    // Ensure jQuery is available
     const $dropdown = $("#cityDropdown");
-    // Clear any existing options
     $dropdown.empty();
 
-    // Add an empty option if desired (for placeholder)
-    $dropdown.append(new Option("", "", false, false));
-
-    // Add the cities as options (assume each city object has 'id' and 'name' properties)
+    // Add cities as options
     cities.forEach(city => {
-        const option = new Option(city.name, city.id, false, false);
-        $dropdown.append(option);
+        $dropdown.append(new Option(city.name, city.id, false, false));
     });
 
-    // Initialize Select2 on the dropdown with search enabled
+    // Initialize Select2
     $dropdown.select2({
         placeholder: "Select cities",
         allowClear: true,
