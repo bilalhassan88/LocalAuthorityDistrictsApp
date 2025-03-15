@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace LocalAuthorityDistricts.Infrastructure
 {

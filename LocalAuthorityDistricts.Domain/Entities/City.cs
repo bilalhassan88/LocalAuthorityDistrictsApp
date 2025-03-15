@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace LocalAuthorityDistricts.Domain
+﻿namespace LocalAuthorityDistricts.Domain
 {
     public class City
     {

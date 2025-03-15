@@ -1,9 +1,7 @@
 ﻿using LocalAuthorityDistricts.Domain;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace LocalAuthorityDistricts.Application
 {
@@ -11,45 +9,60 @@ namespace LocalAuthorityDistricts.Application
     {
         private readonly IGeoJsonRepository _repository;
         private readonly ConcurrencyChunkSettings _chunkSettings;
+        private readonly IMemoryCache _memoryCache;
+        private const string AllDistrictsCacheKey = CacheKeys.AllDistricts;
 
         public GeoJsonService(
             IGeoJsonRepository repository,
-            IOptions<ConcurrencyChunkSettings> chunkSettings)
+            IOptions<ConcurrencyChunkSettings> chunkSettings,
+            IMemoryCache memoryCache)
         {
             _repository = repository;
             _chunkSettings = chunkSettings.Value;
+            _memoryCache = memoryCache;
         }
 
         public async IAsyncEnumerable<Feature> GetAllDistrictsAsync()
         {
-            var batch = new List<Feature>(_chunkSettings.ChunkSize);
-
-            await foreach (var feature in _repository.GetAllFeaturesAsync())
+            if (_memoryCache.TryGetValue(AllDistrictsCacheKey, out List<Feature>? cachedFeatures))
             {
-                batch.Add(feature);
-
-                if (batch.Count >= _chunkSettings.ChunkSize)
+                foreach (var feature in cachedFeatures)
                 {
-                    var processedFeatures = new ConcurrentBag<Feature>();
-
-                    await Parallel.ForEachAsync(batch, async (feature, ct) =>
-                    {
-                        processedFeatures.Add(feature);
-                        await Task.Yield(); // Ensures true async execution
-                    });
-
-                    foreach (var processedFeature in processedFeatures)
-                    {
-                        yield return processedFeature;
-                        await Task.Yield(); // Async-friendly yielding
-                    }
-
-                    batch.Clear();
+                    yield return feature;
+                    await Task.Yield();
                 }
+                yield break;
             }
 
-            // Yield remaining items
-            foreach (var feature in batch)
+            var features = new List<Feature>();
+            bool fullyRetrieved = false;
+
+            try
+            {
+                await foreach (var feature in _repository.GetAllFeaturesAsync())
+                {
+                    features.Add(feature);
+                }
+
+                fullyRetrieved = true; 
+            }
+            catch
+            {
+                fullyRetrieved = false;
+                throw;
+            }
+
+            if (fullyRetrieved && features.Count > 0)
+            {
+                var cacheEntryOptions = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+                };
+
+                _memoryCache.Set(AllDistrictsCacheKey, features, cacheEntryOptions);
+            }
+
+            foreach (var feature in features)
             {
                 yield return feature;
                 await Task.Yield();
@@ -58,11 +71,22 @@ namespace LocalAuthorityDistricts.Application
 
         public async IAsyncEnumerable<Feature> FilterByNameAsync(IEnumerable<string> names)
         {
+            if (_memoryCache.TryGetValue(AllDistrictsCacheKey, out List<Feature>? allFeatures))
+            {
+                foreach (var feature in allFeatures.Where(f => names.Any(name =>
+                         f.Properties.Name.Contains(name, StringComparison.OrdinalIgnoreCase))))
+                {
+                    yield return feature;
+                    await Task.Yield();
+                }
+                yield break;
+            }
+
             var batch = new List<Feature>(_chunkSettings.ChunkSize);
 
             await foreach (var feature in _repository.GetAllFeaturesAsync())
             {
-                if (names.Any(name => feature.Properties.Name.Contains(name, System.StringComparison.OrdinalIgnoreCase)))
+                if (names.Any(name => feature.Properties.Name.Contains(name, StringComparison.OrdinalIgnoreCase)))
                 {
                     batch.Add(feature);
                 }
@@ -74,20 +98,19 @@ namespace LocalAuthorityDistricts.Application
                     await Parallel.ForEachAsync(batch, async (feature, ct) =>
                     {
                         matchingFeatures.Add(feature);
-                        await Task.Yield(); // Allows async processing
+                        await Task.Yield();
                     });
 
                     foreach (var matchingFeature in matchingFeatures)
                     {
                         yield return matchingFeature;
-                        await Task.Yield(); // Ensures proper yielding
+                        await Task.Yield();
                     }
 
                     batch.Clear();
                 }
             }
 
-            // Yield remaining items
             foreach (var feature in batch)
             {
                 yield return feature;
