@@ -7,7 +7,8 @@
 
 <h3>Local Authority Districts (Read-Only)</h3>
 
-<input type="text" @bind="searchQuery" @oninput="OnSearchInput" placeholder="Search by name..." />
+<input type="text" @bind="searchQuery" placeholder="Search by name (comma-separated)..." />
+<button @onclick="InvokeSearch">Search</button>
 <button @onclick="HideAll">Hide All</button>
 <button @onclick="Reload">Reload</button>
 
@@ -21,7 +22,6 @@
 @code {
     private List<Feature> displayedFeatures = new();
     private string searchQuery = string.Empty;
-    private System.Threading.Timer? debounceTimer;
     private string? errorMessage;
     private CancellationTokenSource? cts;
 
@@ -45,7 +45,7 @@
         catch (Exception ex)
         {
             errorMessage = $"Failed to initialize map: {ex.Message}";
-            StateHasChanged(); // Trigger a re-render to display the error message
+            StateHasChanged();
         }
     }
 
@@ -59,14 +59,13 @@
         {
             displayedFeatures.Clear();
             errorMessage = null;
-            StateHasChanged(); // Trigger a re-render to clear the UI
+            StateHasChanged();
 
             await foreach (var feature in GeoJsonService.GetAllDistrictsAsync().WithCancellation(cts.Token))
             {
-                // Check if cancellation was requested
                 if (cts.Token.IsCancellationRequested)
                 {
-                    break; // Exit the loop if cancellation is requested
+                    break;
                 }
 
                 displayedFeatures.Add(feature);
@@ -91,63 +90,53 @@
         catch (Exception ex)
         {
             errorMessage = $"Failed to load districts: {ex.Message}";
-            StateHasChanged(); // Trigger a re-render to display the error message
+            StateHasChanged();
         }
-    }
-
-    private async Task OnSearchInput(ChangeEventArgs e)
-    {
-        searchQuery = e?.Value?.ToString() ?? string.Empty;
-
-        // Dispose old timer (if any) and debounce user input for 300 ms
-        debounceTimer?.Dispose();
-        debounceTimer = new System.Threading.Timer(
-            async _ => await InvokeAsync(InvokeSearch),
-            null,
-            300,
-            System.Threading.Timeout.Infinite
-        );
     }
 
     private async Task InvokeSearch()
     {
-        // Cancel any ongoing operation
-        cts?.Cancel();
+        // Immediately cancel any ongoing tasks and clear the map, like HideAll does
+        await HideAll();
+
+        // Create a new cancellation token for this search
         cts = new CancellationTokenSource();
 
         try
         {
-            displayedFeatures.Clear();
             errorMessage = null;
-            StateHasChanged(); // Trigger a re-render to clear the UI
+            StateHasChanged();
 
             if (string.IsNullOrWhiteSpace(searchQuery))
             {
-                await LoadAllDistricts();
+                errorMessage = "Please enter a search term.";
+                StateHasChanged();
+                return;
             }
-            else
+
+            // Split the search query by commas and trim each entry to support multiple names
+            var names = searchQuery
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(name => name.Trim())
+                .ToList();
+
+            await foreach (var feature in GeoJsonService.FilterByNameAsync(names).WithCancellation(cts.Token))
             {
-                await foreach (var feature in GeoJsonService.FilterByNameAsync(searchQuery).WithCancellation(cts.Token))
+                if (cts.Token.IsCancellationRequested)
                 {
-                    // Check if cancellation was requested
-                    if (cts.Token.IsCancellationRequested)
-                    {
-                        break; // Exit the loop if cancellation is requested
-                    }
-
-                    displayedFeatures.Add(feature);
-
-                    // Update map in batches (every 10 items)
-                    if (displayedFeatures.Count % 10 == 0)
-                    {
-                        await UpdateMapAsync();
-                    }
+                    break;
                 }
 
-                if (!cts.Token.IsCancellationRequested)
-                {
-                    await UpdateMapAsync();
-                }
+                displayedFeatures.Add(feature);
+
+                // Update the map after each feature is added, if desired.
+                // If you prefer to update only once after the loop, remove this call.
+                await UpdateMapAsync();
+            }
+
+            if (!cts.Token.IsCancellationRequested)
+            {
+                await UpdateMapAsync();
             }
         }
         catch (OperationCanceledException)
@@ -157,7 +146,7 @@
         catch (Exception ex)
         {
             errorMessage = $"Failed to search districts: {ex.Message}";
-            StateHasChanged(); // Trigger a re-render to display the error message
+            StateHasChanged();
         }
     }
 
@@ -165,24 +154,22 @@
     {
         try
         {
-            // Cancel any ongoing operation
+            // Cancel any ongoing operations, clear the list, and remove the map layer
             cts?.Cancel();
-
-            // Clear the displayed features and remove the layer from the map
             displayedFeatures.Clear();
             await JS.InvokeVoidAsync("mapboxInterop.removeLayer", "districtsLayer");
-            StateHasChanged(); // Trigger a re-render to clear the UI
+            StateHasChanged();
         }
         catch (Exception ex)
         {
             errorMessage = $"Failed to hide districts: {ex.Message}";
-            StateHasChanged(); // Trigger a re-render to display the error message
+            StateHasChanged();
         }
     }
 
     private async Task Reload()
     {
-        await LoadAllDistricts(); // Restart the process of loading all districts
+        await LoadAllDistricts();
     }
 
     private async Task UpdateMapAsync()
@@ -200,15 +187,12 @@
         catch (Exception ex)
         {
             errorMessage = $"Failed to update map: {ex.Message}";
-            StateHasChanged(); // Trigger a re-render to display the error message
+            StateHasChanged();
         }
     }
 
-    // Implement IDisposable for cleanup
     public void Dispose()
     {
-        // Clean up the timer and cancellation token
-        debounceTimer?.Dispose();
         cts?.Cancel();
     }
 }

@@ -26,13 +26,6 @@ public class DistrictsController : ControllerBase
         }
     }
 
-    [HttpGet("filter")]
-    public async IAsyncEnumerable<Feature> FilterByName([FromQuery] string name)
-    {
-        await foreach (var feature in _geoJsonService.FilterByNameAsync(name))
-        {
-            yield return feature;
-        }
-    }
+
 
 }
