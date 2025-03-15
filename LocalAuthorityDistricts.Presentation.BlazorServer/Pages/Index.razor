@@ -3,6 +3,7 @@
 @using LocalAuthorityDistricts.Application
 @using LocalAuthorityDistricts.Domain
 @inject IGeoJsonService GeoJsonService
+@inject ICityService CityService
 @inject IJSRuntime JS
 
 <h3>Local Authority Districts (Read-Only)</h3>
@@ -11,6 +12,10 @@
 <button @onclick="InvokeSearch">Search</button>
 <button @onclick="HideAll">Hide All</button>
 <button @onclick="Reload">Reload</button>
+
+<!-- City Dropdown -->
+<label for="cityDropdown">Select Cities:</label>
+<select id="cityDropdown" multiple="multiple" style="width: 100%;"></select>
 
 <div id="map" style="width: 100%; height: 600px;"></div>
 
@@ -24,6 +29,7 @@
     private string searchQuery = string.Empty;
     private string? errorMessage;
     private CancellationTokenSource? cts;
+    private List<City> cities = new();
 
     private readonly string mapboxAccessToken = "pk.eyJ1IjoiYmlsYWxoYXNzYW4iLCJhIjoiY2pzZXBtZDlrMTVjZzQ0bzZmY29zNHozbCJ9.gIAwBp9pMmZUhWliI4CrfA";
 
@@ -31,6 +37,8 @@
     {
         if (firstRender)
         {
+            await LoadCities();
+
             await InitializeMap();
             await LoadAllDistricts();
         }
@@ -51,7 +59,6 @@
 
     private async Task LoadAllDistricts()
     {
-        // Cancel any ongoing operation
         cts?.Cancel();
         cts = new CancellationTokenSource();
 
@@ -77,7 +84,6 @@
                 }
             }
 
-            // Final update to ensure all features appear
             if (!cts.Token.IsCancellationRequested)
             {
                 await UpdateMapAsync();
@@ -96,10 +102,7 @@
 
     private async Task InvokeSearch()
     {
-        // Immediately cancel any ongoing tasks and clear the map, like HideAll does
         await HideAll();
-
-        // Create a new cancellation token for this search
         cts = new CancellationTokenSource();
 
         try
@@ -114,7 +117,6 @@
                 return;
             }
 
-            // Split the search query by commas and trim each entry to support multiple names
             var names = searchQuery
                 .Split(',', StringSplitOptions.RemoveEmptyEntries)
                 .Select(name => name.Trim())
@@ -128,9 +130,6 @@
                 }
 
                 displayedFeatures.Add(feature);
-
-                // Update the map after each feature is added, if desired.
-                // If you prefer to update only once after the loop, remove this call.
                 await UpdateMapAsync();
             }
 
@@ -154,7 +153,6 @@
     {
         try
         {
-            // Cancel any ongoing operations, clear the list, and remove the map layer
             cts?.Cancel();
             displayedFeatures.Clear();
             await JS.InvokeVoidAsync("mapboxInterop.removeLayer", "districtsLayer");
@@ -187,6 +185,22 @@
         catch (Exception ex)
         {
             errorMessage = $"Failed to update map: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadCities()
+    {
+        try
+        {
+            // Adjust pageNumber and pageSize as needed
+            cities = await CityService.GetCitiesAsync(1, 100);
+            // Initialize the JS dropdown with the cities list
+            await JS.InvokeVoidAsync("initializeCityDropdown", cities);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load cities: {ex.Message}";
             StateHasChanged();
         }
     }
