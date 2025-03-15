@@ -21,11 +21,29 @@ namespace LocalAuthorityDistricts.Infrastructure
             };
         }
 
-        public async Task<List<Feature>> GetAllFeaturesAsync()
+        public async IAsyncEnumerable<Feature> GetAllFeaturesAsync()
         {
-            var geoJsonContent = await File.ReadAllTextAsync(_filePath);
-            var featureCollection = JsonSerializer.Deserialize<FeatureCollection>(geoJsonContent, _options);
-            return featureCollection?.Features ?? new List<Feature>();
+            if (!File.Exists(_filePath))
+            {
+                throw new FileNotFoundException($"GeoJSON file not found at: {_filePath}");
+            }
+
+            using var stream = new FileStream(_filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
+            using var reader = new StreamReader(stream, System.Text.Encoding.UTF8);
+
+            string json = await reader.ReadToEndAsync(); // Read full JSON file
+            var featureCollection = JsonSerializer.Deserialize<FeatureCollection>(json, _options);
+
+            if (featureCollection?.Features == null)
+            {
+                yield break; // No features found, exit gracefully
+            }
+
+            foreach (var feature in featureCollection.Features)
+            {
+                yield return feature;
+                await Task.Yield(); // Allow async execution
+            }
         }
     }
 }

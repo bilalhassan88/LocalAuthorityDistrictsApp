@@ -23,15 +23,16 @@ public class CityService : ICityService
         // Try to get the cities from the cache.
         if (!_memoryCache.TryGetValue(CitiesCacheKey, out List<City> cities))
         {
-            // Not in cache, so load from the repository.
-            var features = await _geoJsonRepository.GetAllFeaturesAsync();
-            cities = features
-                .Where(f => f.Properties != null)
-                .Select(f => new City
+            cities = new List<City>();
+
+            // Stream data from the repository.
+            await foreach (var feature in _geoJsonRepository.GetAllFeaturesAsync())
+            {
+                if (feature.Properties != null)
                 {
-                    Name = f.Properties.Name
-                })
-                .ToList();
+                    cities.Add(new City { Name = feature.Properties.Name });
+                }
+            }
 
             // Set cache options for one hour expiration.
             var cacheEntryOptions = new MemoryCacheEntryOptions
@@ -48,7 +49,6 @@ public class CityService : ICityService
             .Where(c => string.IsNullOrEmpty(searchQuery) ||
                         c.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
             .ToList();
-
 
         return filteredCities;
     }

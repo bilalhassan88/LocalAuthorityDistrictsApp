@@ -2,6 +2,6 @@
 {
     public interface IGeoJsonRepository
     {
-        Task<List<Feature>> GetAllFeaturesAsync();
+        IAsyncEnumerable<Feature> GetAllFeaturesAsync();
     }
 }

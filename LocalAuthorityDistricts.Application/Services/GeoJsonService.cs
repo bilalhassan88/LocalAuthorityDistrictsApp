@@ -22,46 +22,76 @@ namespace LocalAuthorityDistricts.Application
 
         public async IAsyncEnumerable<Feature> GetAllDistrictsAsync()
         {
-            var allFeatures = await _repository.GetAllFeaturesAsync();
-            var batches = allFeatures.Chunk(_chunkSettings.ChunkSize);
+            var batch = new List<Feature>(_chunkSettings.ChunkSize);
 
-            foreach (var batch in batches)
+            await foreach (var feature in _repository.GetAllFeaturesAsync())
             {
-                var processedFeatures = new ConcurrentBag<Feature>();
+                batch.Add(feature);
 
-                await Parallel.ForEachAsync(batch, async (feature, ct) =>
+                if (batch.Count >= _chunkSettings.ChunkSize)
                 {
-                    processedFeatures.Add(feature);
-                });
+                    var processedFeatures = new ConcurrentBag<Feature>();
 
-                foreach (var feature in processedFeatures)
-                {
-                    yield return feature;
+                    await Parallel.ForEachAsync(batch, async (feature, ct) =>
+                    {
+                        processedFeatures.Add(feature);
+                        await Task.Yield(); // Ensures true async execution
+                    });
+
+                    foreach (var processedFeature in processedFeatures)
+                    {
+                        yield return processedFeature;
+                        await Task.Yield(); // Async-friendly yielding
+                    }
+
+                    batch.Clear();
                 }
+            }
+
+            // Yield remaining items
+            foreach (var feature in batch)
+            {
+                yield return feature;
+                await Task.Yield();
             }
         }
 
         public async IAsyncEnumerable<Feature> FilterByNameAsync(IEnumerable<string> names)
         {
-            var allFeatures = await _repository.GetAllFeaturesAsync();
-            var batches = allFeatures.Chunk(_chunkSettings.ChunkSize);
+            var batch = new List<Feature>(_chunkSettings.ChunkSize);
 
-            foreach (var batch in batches)
+            await foreach (var feature in _repository.GetAllFeaturesAsync())
             {
-                var matchingFeatures = new ConcurrentBag<Feature>();
-
-                await Parallel.ForEachAsync(batch, async (feature, ct) =>
+                if (names.Any(name => feature.Properties.Name.Contains(name, System.StringComparison.OrdinalIgnoreCase)))
                 {
-                    if (names.Any(name => feature.Properties.Name.Contains(name, System.StringComparison.OrdinalIgnoreCase)))
+                    batch.Add(feature);
+                }
+
+                if (batch.Count >= _chunkSettings.ChunkSize)
+                {
+                    var matchingFeatures = new ConcurrentBag<Feature>();
+
+                    await Parallel.ForEachAsync(batch, async (feature, ct) =>
                     {
                         matchingFeatures.Add(feature);
-                    }
-                });
+                        await Task.Yield(); // Allows async processing
+                    });
 
-                foreach (var feature in matchingFeatures)
-                {
-                    yield return feature;
+                    foreach (var matchingFeature in matchingFeatures)
+                    {
+                        yield return matchingFeature;
+                        await Task.Yield(); // Ensures proper yielding
+                    }
+
+                    batch.Clear();
                 }
+            }
+
+            // Yield remaining items
+            foreach (var feature in batch)
+            {
+                yield return feature;
+                await Task.Yield();
             }
         }
     }
