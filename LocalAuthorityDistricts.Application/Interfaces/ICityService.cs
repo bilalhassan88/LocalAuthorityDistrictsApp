@@ -6,6 +6,6 @@ namespace LocalAuthorityDistricts.Application
 {
     public interface ICityService
     {
-        Task<List<City>> GetCitiesAsync(int pageNumber, int pageSize, string searchQuery = "");
+        Task<List<City>> GetCitiesAsync(string searchQuery = "");
     }
 }

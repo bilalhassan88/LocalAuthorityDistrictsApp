@@ -194,7 +194,7 @@
         try
         {
             // Adjust pageNumber and pageSize as needed.
-            cities = await CityService.GetCitiesAsync(1, 100);
+            cities = await CityService.GetCitiesAsync();
             // Initialize the JS dropdown with the cities list.
             await JS.InvokeVoidAsync("initializeCityDropdown", cities);
         }
