@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LocalAuthorityDistricts.Domain.Interfaces
+﻿namespace LocalAuthorityDistricts.Domain
 {
-    internal class IGeoJsonRepository
+    public interface IGeoJsonRepository
     {
+        Task<List<Feature>> GetAllFeaturesAsync();
     }
 }

@@ -1,0 +1,225 @@
+﻿@page "/"
+@layout MinimalLayout
+@using LocalAuthorityDistricts.Application
+@using LocalAuthorityDistricts.Domain
+@inject IGeoJsonService GeoJsonService
+@inject ICityService CityService
+@inject IJSRuntime JS
+
+<h3>Local Authority Districts </h3>
+
+@if (isCitiesLoading)
+{
+    <div class="loader-overlay">
+        <div class="loader">Loading Cities...</div>
+    </div>
+}
+
+<!-- City Dropdown -->
+<label for="cityDropdown">Select Cities:</label>
+<select id="cityDropdown" multiple="multiple" style="width: 100%;"></select>
+<button @onclick="InvokeSearch">Search by Selected Cities</button>
+<button @onclick="HideAll">Hide All</button>
+<button @onclick="Reload">Reload</button>
+
+<div id="map" style="width: 100%; height: 600px;"></div>
+
+@if (errorMessage != null)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@code {
+    private List<Feature> displayedFeatures = new();
+    private string? errorMessage;
+    private CancellationTokenSource? cts;
+    private List<City> cities = new();
+
+    // Flag used only for city loading.
+    private bool isCitiesLoading = true;
+
+    private readonly string mapboxAccessToken = "pk.eyJ1IjoiYmlsYWxoYXNzYW4iLCJhIjoiY2pzZXBtZDlrMTVjZzQ0bzZmY29zNHozbCJ9.gIAwBp9pMmZUhWliI4CrfA";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadCities(); // Show loader until cities load.
+            isCitiesLoading = false;
+            StateHasChanged();
+
+            // Continue with map initialization and district loading.
+            await InitializeMap();
+            await LoadAllDistricts();
+        }
+    }
+
+    private async Task InitializeMap()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("mapboxInterop.initializeMap", mapboxAccessToken, "map");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to initialize map: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadAllDistricts()
+    {
+        cts?.Cancel();
+        cts = new CancellationTokenSource();
+
+        try
+        {
+            displayedFeatures.Clear();
+            errorMessage = null;
+            StateHasChanged();
+
+            await foreach (var feature in GeoJsonService.GetAllDistrictsAsync().WithCancellation(cts.Token))
+            {
+                if (cts.Token.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                displayedFeatures.Add(feature);
+
+                // Update map in batches (every 10 items)
+                if (displayedFeatures.Count % 10 == 0)
+                {
+                    await UpdateMapAsync();
+                }
+            }
+
+            if (!cts.Token.IsCancellationRequested)
+            {
+                await UpdateMapAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore cancellation
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load districts: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task InvokeSearch()
+    {
+        // Cancel any ongoing operations and clear current features.
+        await HideAll();
+
+        // Get selected cities from the multi-select dropdown via JS interop.
+        var selectedCityValues = await JS.InvokeAsync<string[]>("getSelectedCities", "#cityDropdown");
+
+        if (selectedCityValues == null || !selectedCityValues.Any())
+        {
+            errorMessage = "Please select at least one city.";
+            StateHasChanged();
+            return;
+        }
+
+        cts = new CancellationTokenSource();
+
+        try
+        {
+            errorMessage = null;
+            StateHasChanged();
+
+            // Use the selected city values as the filter criteria.
+            var names = selectedCityValues.ToList();
+
+            await foreach (var feature in GeoJsonService.FilterByNameAsync(names).WithCancellation(cts.Token))
+            {
+                if (cts.Token.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                displayedFeatures.Add(feature);
+                await UpdateMapAsync();
+            }
+
+            if (!cts.Token.IsCancellationRequested)
+            {
+                await UpdateMapAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore cancellation.
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to search districts: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task HideAll()
+    {
+        try
+        {
+            cts?.Cancel();
+            displayedFeatures.Clear();
+            await JS.InvokeVoidAsync("mapboxInterop.removeLayer", "districtsLayer");
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to hide districts: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task Reload()
+    {
+        await LoadAllDistricts();
+    }
+
+    private async Task UpdateMapAsync()
+    {
+        try
+        {
+            var geoJson = new
+            {
+                type = "FeatureCollection",
+                features = displayedFeatures
+            };
+
+            await JS.InvokeVoidAsync("mapboxInterop.addGeoJsonLayer", "districtsLayer", geoJson);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to update map: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadCities()
+    {
+        try
+        {
+            // Adjust pageNumber and pageSize as needed.
+            cities = await CityService.GetCitiesAsync();
+            // Initialize the JS dropdown with the cities list.
+            await JS.InvokeVoidAsync("initializeCityDropdown", cities);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load cities: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        cts?.Cancel();
+    }
+}

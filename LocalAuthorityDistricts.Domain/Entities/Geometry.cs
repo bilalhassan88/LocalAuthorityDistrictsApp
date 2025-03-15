@@ -1,12 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
-namespace LocalAuthorityDistricts.Domain.Entities
+namespace LocalAuthorityDistricts.Domain
 {
-    internal class Geometry
+    [JsonConverter(typeof(GeometryJsonConverter))]
+    public class Geometry
     {
+        public GeoJsonObjectType GeometryType { get; }
+        public ICoordinates Coordinates { get; }
+
+        public Geometry(GeoJsonObjectType geometryType, ICoordinates coordinates)
+        {
+            GeometryType = geometryType;
+            Coordinates = coordinates ?? throw new ArgumentNullException(nameof(coordinates));
+        }
     }
 }

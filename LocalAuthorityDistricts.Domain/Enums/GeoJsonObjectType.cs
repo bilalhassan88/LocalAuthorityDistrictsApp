@@ -1,20 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LocalAuthorityDistricts.Domain
+﻿namespace LocalAuthorityDistricts.Domain
 {
     public enum GeoJsonObjectType
     {
-        Feature,
         FeatureCollection,
-        Polygon,
-        MultiPolygon,
+        Feature,
         Point,
         MultiPoint,
         LineString,
-        MultiLineString
+        MultiLineString,
+        Polygon,
+        MultiPolygon,
+        GeometryCollection
     }
 }

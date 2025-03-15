@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.App
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.Infrastructure", "LocalAuthorityDistricts.Infrastructure\LocalAuthorityDistricts.Infrastructure.csproj", "{BE21C404-4B52-47F8-89CD-40573FA9B68E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.Api", "LocalAuthorityDistricts.Api\LocalAuthorityDistricts.Api.csproj", "{33910096-800A-498B-8D0F-25155DE47B3C}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.Presentation.Blazor", "LocalAuthorityDistricts.Presentation.Blazor\LocalAuthorityDistricts.Presentation.Blazor.csproj", "{0EBB1024-6115-45AE-B1B3-B9A3B03B256A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{5A0EB188-C15B-47A5-9148-7FF486242FDE}"
@@ -20,6 +18,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.Infrastructure.Tests", "LocalAuthorityDistricts.Infrastructure.Tests\LocalAuthorityDistricts.Infrastructure.Tests.csproj", "{5749AE0B-FCEC-403B-95B9-097889154684}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.Presentation.Tests", "LocalAuthorityDistricts.Presentation.Tests\LocalAuthorityDistricts.Presentation.Tests.csproj", "{E6F1CD45-C318-4705-85F3-DFD295D12715}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalAuthorityDistricts.API", "LocalAuthorityDistricts.API\LocalAuthorityDistricts.API.csproj", "{6337D694-2AAC-4F93-ABD8-00BCAB10F93F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalAuthorityDistricts.Presentation.BlazorServer", "LocalAuthorityDistricts.Presentation.BlazorServer\LocalAuthorityDistricts.Presentation.BlazorServer.csproj", "{EA1298F1-1150-4EDB-83A7-B8C2BCEA10C1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,10 +41,6 @@ Global
 		{BE21C404-4B52-47F8-89CD-40573FA9B68E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BE21C404-4B52-47F8-89CD-40573FA9B68E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BE21C404-4B52-47F8-89CD-40573FA9B68E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{33910096-800A-498B-8D0F-25155DE47B3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{33910096-800A-498B-8D0F-25155DE47B3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{33910096-800A-498B-8D0F-25155DE47B3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{33910096-800A-498B-8D0F-25155DE47B3C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0EBB1024-6115-45AE-B1B3-B9A3B03B256A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0EBB1024-6115-45AE-B1B3-B9A3B03B256A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0EBB1024-6115-45AE-B1B3-B9A3B03B256A}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -59,6 +57,14 @@ Global
 		{E6F1CD45-C318-4705-85F3-DFD295D12715}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E6F1CD45-C318-4705-85F3-DFD295D12715}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E6F1CD45-C318-4705-85F3-DFD295D12715}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6337D694-2AAC-4F93-ABD8-00BCAB10F93F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6337D694-2AAC-4F93-ABD8-00BCAB10F93F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6337D694-2AAC-4F93-ABD8-00BCAB10F93F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6337D694-2AAC-4F93-ABD8-00BCAB10F93F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA1298F1-1150-4EDB-83A7-B8C2BCEA10C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA1298F1-1150-4EDB-83A7-B8C2BCEA10C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA1298F1-1150-4EDB-83A7-B8C2BCEA10C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA1298F1-1150-4EDB-83A7-B8C2BCEA10C1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

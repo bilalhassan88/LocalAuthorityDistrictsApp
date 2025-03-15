@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LocalAuthorityDistricts.Domain.Entities
+namespace LocalAuthorityDistricts.Application
 {
-    internal class Feature
+    public class ConcurrencyChunkSettings
     {
+        public int ChunkSize { get; set; }
     }
 }
