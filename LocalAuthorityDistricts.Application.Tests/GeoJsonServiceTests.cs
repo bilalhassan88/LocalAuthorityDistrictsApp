@@ -1,6 +1,7 @@
 using LocalAuthorityDistricts.Application;
 using LocalAuthorityDistricts.Domain;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.Runtime.CompilerServices;
@@ -12,6 +13,7 @@ namespace ApplicationTests
     {
         private readonly Mock<IGeoJsonRepository> _repositoryMock;
         private readonly IMemoryCache _memoryCache;
+        private readonly Mock<ILogger<GeoJsonService>> _loggerMock;
         private readonly GeoJsonService _service;
         private readonly ConcurrencyChunkSettings _chunkSettings;
 
@@ -19,10 +21,11 @@ namespace ApplicationTests
         {
             _repositoryMock = new Mock<IGeoJsonRepository>();
             _memoryCache = new MemoryCache(new MemoryCacheOptions());
+            _loggerMock = new Mock<ILogger<GeoJsonService>>();
             _chunkSettings = new ConcurrencyChunkSettings { ChunkSize = 2 };
             var options = Options.Create(_chunkSettings);
 
-            _service = new GeoJsonService(_repositoryMock.Object, options, _memoryCache);
+            _service = new GeoJsonService(_repositoryMock.Object, options, _memoryCache, _loggerMock.Object);
         }
 
         [Fact]
@@ -49,10 +52,15 @@ namespace ApplicationTests
             _repositoryMock.Verify(repo => repo.GetAllFeaturesAsync(), Times.Never);
         }
 
+
         [Fact]
         public async Task FilterByNameAsync_ShouldReturnMatchingFeaturesFromCache()
         {
-            var cachedFeatures = new List<Feature> { CreateFeature("DistrictA", "DA1", 40000, "Region3"), CreateFeature("DistrictB", "DB1", 60000, "Region4") };
+            var cachedFeatures = new List<Feature>
+            {
+                CreateFeature("DistrictA", "DA1", 40000, "Region3"),
+                CreateFeature("DistrictB", "DB1", 60000, "Region4")
+            };
             _memoryCache.Set(CacheKeys.AllDistricts, cachedFeatures, TimeSpan.FromHours(1));
 
             var result = await CollectAsync(_service.FilterByNameAsync(new List<string> { "A" }));
@@ -64,7 +72,11 @@ namespace ApplicationTests
         [Fact]
         public async Task FilterByNameAsync_ShouldReturnMatchingFeaturesFromRepository_WhenCacheIsEmpty()
         {
-            var features = new List<Feature> { CreateFeature("DistrictX", "DX1", 70000, "Region5"), CreateFeature("DistrictY", "DY1", 80000, "Region6") };
+            var features = new List<Feature>
+            {
+                CreateFeature("DistrictX", "DX1", 70000, "Region5"),
+                CreateFeature("DistrictY", "DY1", 80000, "Region6")
+            };
             _repositoryMock.Setup(repo => repo.GetAllFeaturesAsync()).Returns(ToAsyncEnumerable(features));
 
             var result = await CollectAsync(_service.FilterByNameAsync(new List<string> { "X" }));
@@ -76,13 +88,19 @@ namespace ApplicationTests
         [Fact]
         public async Task FilterByNameAsync_ShouldReturnEmpty_WhenNoMatchesFound()
         {
-            var features = new List<Feature> { CreateFeature("DistrictA", "DA1", 50000, "Region7"), CreateFeature("DistrictB", "DB1", 60000, "Region8") };
+            var features = new List<Feature>
+            {
+                CreateFeature("DistrictA", "DA1", 50000, "Region7"),
+                CreateFeature("DistrictB", "DB1", 60000, "Region8")
+            };
             _repositoryMock.Setup(repo => repo.GetAllFeaturesAsync()).Returns(ToAsyncEnumerable(features));
 
             var result = await CollectAsync(_service.FilterByNameAsync(new List<string> { "Z" }));
 
             result.Should().BeEmpty();
         }
+
+
 
         private static Feature CreateFeature(string name, string code, int population, string region)
         {
@@ -92,7 +110,6 @@ namespace ApplicationTests
                 new DistrictProperties(name, code, population, region)
             );
         }
-
 
         private static async IAsyncEnumerable<T> ToAsyncEnumerable<T>(IEnumerable<T> source, [EnumeratorCancellation] System.Threading.CancellationToken cancellationToken = default)
         {

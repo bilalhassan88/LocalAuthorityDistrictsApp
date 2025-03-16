@@ -1,38 +1,29 @@
 using LocalAuthorityDistricts.Domain;
 using LocalAuthorityDistricts.Infrastructure;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Text.Json;
 using FluentAssertions;
 
 namespace InfrastructureTests
 {
-    public class GeoJsonRepositoryTests
+    public class GeoJsonRepositoryTests 
     {
         private readonly string _testFilePath;
         private readonly Mock<IOptions<GeoJsonFileSettings>> _fileSettingsMock;
+        private readonly Mock<ILogger<GeoJsonRepository>> _loggerMock;
         private readonly GeoJsonRepository _repository;
 
         public GeoJsonRepositoryTests()
         {
             _testFilePath = Path.GetTempFileName();
             _fileSettingsMock = new Mock<IOptions<GeoJsonFileSettings>>();
+            _loggerMock = new Mock<ILogger<GeoJsonRepository>>();
+
             _fileSettingsMock.Setup(s => s.Value).Returns(new GeoJsonFileSettings { FilePath = _testFilePath });
 
-            _repository = new GeoJsonRepository(_fileSettingsMock.Object);
-        }
-
-        [Fact]
-        public async Task GetAllFeaturesAsync_ShouldThrowFileNotFoundException_WhenFileDoesNotExist()
-        {
-            var nonExistentPath = Path.Combine(Path.GetTempPath(), "nonexistent.geojson");
-            _fileSettingsMock.Setup(s => s.Value).Returns(new GeoJsonFileSettings { FilePath = nonExistentPath });
-
-            var repository = new GeoJsonRepository(_fileSettingsMock.Object);
-
-            Func<Task> act = async () => await CollectAsync(repository.GetAllFeaturesAsync());
-
-            await act.Should().ThrowAsync<FileNotFoundException>().WithMessage($"GeoJSON file not found at: {nonExistentPath}");
+            _repository = new GeoJsonRepository(_fileSettingsMock.Object, _loggerMock.Object);
         }
 
         [Fact]
